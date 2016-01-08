@@ -1,0 +1,40 @@
+README:
+-------
+
+Here reside precompiled binaries for DevIL and GLEW which are required by the
+labs. Binaries are precompiled for the StuDAT computers in the Lab-rooms, and
+may not work on your personal computer(s) - for these you may have to rebuild
+DevIL and GLEW.
+
+The build scripts check 
+
+	linux/lib64
+	linux/lib32
+
+for libraries, and
+
+	linux/include
+
+for headers during configuration. You may replace the files in these locations
+with more appropriate versions. Source code for DevIL and GLEW is located in
+the linux/ directory:
+
+	linux/glew-1.7.0.tgz
+	linux/DevIL-1.7.8.tar.gz
+
+Instructions are below:
+
+- Building DevIL:
+
+ $ tar xvfz DevIL-1.7.8.tar.gz
+ $ cd devil-1.7.8
+ $ ./configure --prefix="$(cd .. && pwd)" --enable-ILU --enable-ILUT
+ $ make && make install
+
+- Building GLEW
+ 
+ $ tar xvfz glew-1.7.0.tgz
+ $ cd glew
+ $ make GLEW_DEST=".." && make install GLEW_DEST=".."
+
+#EOF

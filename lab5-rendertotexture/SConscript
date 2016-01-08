@@ -1,0 +1,54 @@
+# SConscript - build lab5 under Linux
+
+SOURCE = "lab5_main.cpp";
+TARGET = "lab5"
+
+TEXTURES = Glob( "*.jpg" );
+DATADIRS = "shaders";
+
+Import( "env" );
+Import( "libGLUTIL" );
+Import( "libLinmath" );
+
+from SCript.Stages import config, build, install;
+from os.path import join as join_path;
+
+dataDirs = {};
+dataFiles = TEXTURES;
+
+for d in DATADIRS.split():
+	dataDirs[d] = Glob( join_path( d, "*" ) );
+	pass;
+
+@build
+def build_lab():
+	obj = [env.Object(src) for src in SOURCE.split()];
+
+	lib = [libGLUTIL, libLinmath];
+	prg = env.Program( target = TARGET, source = obj + lib );
+	
+	# The following line ensures that files are moved to the build dir
+	dat = [env.File(data) for data in dataFiles];
+
+	for direct, files in dataDirs.iteritems():
+		dat += [env.Dir(direct)];
+		dat += [env.File(fl) for fl in files];
+		pass;
+
+	return prg; 
+
+@install
+def install_files():
+	dataPath = "#share/" + TARGET;
+
+	iprog = env.Install( "#bin", TARGET );
+	idata = [env.Install( dataPath, data ) for data in dataFiles];
+
+	for direct, files in dataDirs.iteritems():
+		dataPathDir = join_path( dataPath, direct );
+		idata += [env.Install( dataPathDir, fl ) for fl in files];
+		pass;
+
+	return [iprog] + idata;
+
+# EOF vim:syntax=python:foldmethod=marker:ts=4:noexpandtab

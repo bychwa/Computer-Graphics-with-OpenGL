@@ -1,0 +1,208 @@
+Quick Introduction To Doing The Graphics Labs in Linux
+------------------------------------------------------
+
+**** NOTE: This is only recommended for persons familiar and comfortable
+**** with a Linux environment. Only limited support is provided, as not all
+**** lab assistants may be able to answer your questions if you run into
+**** problems.
+
+Anyway, on to building and running the labs on Linux. In the following 
+instructions, commands-line commands are prefixed with a '$' (you should not
+type this, but only the command following it).
+
+Lets assume that all the labs are in `/home/foo/graphics'. Change to that
+directory:
+
+	$ pwd
+	/home/foo/graphics
+
+Unfortunately, the permissions get messed up in the .zip file, so you'll have
+to make `scons.py' executable:
+
+	$ chmod 755 scons.py
+
+To build the labs, you'll first have to run a configuration step:
+
+	$ ./scons.py configure
+
+This tries to detect various libraries that we need (like OpenGL). If there's
+an error in the `configure' step, check the troubleshooting section below.
+
+Next, to compile *all* labs, run
+
+	$ ./scons.py
+or
+	$ ./scons.py -j4
+
+(-j4 enables 4x parallel compilation, which can be somewhat quicker, especially
+if you have a multi-core CPU)
+
+Assuming that there were no errors, you can now run the compiled labs as e.g.
+
+	$ ./build/debug/lab1/lab1
+
+If you wish to compile a single lab, instead run
+
+	$ ./scons.py lab1
+	$ ./scons.py lab2-textures
+	...
+
+(normally, you don't have to do this. Scons will only compile files that have
+changed since the last compilation.)
+
+Additionally, you can run `install' which will place the binaries in e.g.
+	
+	/home/foo/graphics/bin
+
+and various data files in e.g.
+	
+	/home/foo/graphics/share/
+
+by running
+
+	$ ./scons.py install
+
+To launch a lab from these locations, just type e.g.
+
+	$ bin/lab1
+	$ bin/lab2
+	...
+
+
+== IMPORTANT REMARK == 
+
+** IMPORTANT: the path for compilation errors and warnings is given relative to
+** the `build' directory! Do not change these files - you should always change
+** the files in labN/ directly.
+
+For example, a compilation error in lab1/lab1_main.cpp will result in the 
+following message:
+
+	$ ./scons.py
+	  CXX: build/debug/lab1/lab1_main.cpp
+	build/debug/lab1/lab1_main.cpp:275:1: error: 'foobar' does not name a type
+	scons: *** [build/debug/lab1/lab1_main.o] Error 1
+
+As you can see, it complains about `build/debug/lab1/lab1_main.cpp'. This is a
+mirrored copy from `lab1/lab1_main.cpp'. Fix the error in `lab1/lab1_main.cpp'
+and everything will be alright:
+
+	$ vim lab1/lab1_main.cpp
+	...
+	$ ./scons.py
+	  CXX: build/debug/lab1/lab1_main.cpp
+	 LINK: -executable- build/debug/lab1/lab1 <<-
+	   | build/debug/lab1/lab1_main.o; build/debug/glutil/libGLUTIL.a
+	   | build/debug/linmath/libGLUTIL.a
+	   | GL; GLU; glut; GLEW; IL; ILU; ILUT; 
+
+(Advanced note: If possible, SCons will acutally use hard-links to files, 
+rather than copies. In that case, changing the file in the build-directory will
+also change the file in the source directory -- it's the same file.)
+
+
+== DEBUG vs. RELEASE MODES == 
+
+By default, programs are compiled in "debug mode". You can build everything in
+"release mode" if you wish, by running
+
+	$ ./scons.py variant=release -j4 configure build install
+
+(you can also run the steps separately, just pass variant=release each time)
+
+
+=== TROUBLESHOOTING ===
+
+-- Problem: Configure can't find GL or GLU
+-- Solution: StuDAT computers should provide a usable GL/GLU out-of-the-box.
+
+	On non-StuDAT machines, you'll have to install GL/GLU through your
+	distribution's package manager. The labs depend on your system providing an
+	usable OpenGL.
+
+-- Problem: Configure can't find GLUT
+-- Solution: StuDAT computers should provide an usable GLUT out-of-the-box.
+
+	On non-StuDAT machines, check if your distribution's package manager
+	provides GLUT, install it using the package manager. Alternatively, you may
+	have to compile e.g. freeglut by hand.
+
+	http://freeglut.sourceforge.net/
+
+	You may install freeglut locally in linux/include and linux/lib64 (or 
+	linux/lib32).
+
+-- Problem: Configure can't find IL / ILU / ILUT (DevIL)
+-- Solution: For StuDAT computers, we provide a pre-compiled DevIL in the 
+	linux/ subdirectory. Make sure that you got the linux/ subdirectory:
+
+		$ ls linux/
+		DevIL-1.7.8.tar.gz  glew-1.5.1-src.tgz  include  lib32  lib64  README
+
+	See README for instructions on how to build DevIL if the provided binaries
+	are incompatible with your system.
+
+-- Problem: Configure can't find GLEW
+-- Solution: For StuDAT computers, we provide a pre-compiled GLEW in the 
+	linux/ subdirectory. Make sure that you got the linux/ subdirectory:
+
+		$ ls linux/
+		DevIL-1.7.8.tar.gz  glew-1.5.1-src.tgz  include  lib32  lib64  README
+
+	See README for instructions on how to build GLEW if the provided binaries
+	are incompatible with your system.
+
+-- Problem: A lab says "Error in opening file '...'"
+-- Problem: The project crashes; it says "Failed to load texture: '...'"
+-- Solution: Run
+	
+		$ ./scons.py scenes install
+
+	Scons may tell you that 'scenes' is already up-to-date, but that's an
+	unfortunate semi-lie (and it did still make a new copy just there).
+
+-- Problem: I changed my shaders, but nothing happens
+-- Problem: I changed the textures, but nothing happens
+-- Solution: Rebuild the corresponding lab. This will refresh the files in the
+	build directory from the sources, even if scons tells you that the files
+	are already up-to-date.
+
+	Generally, you should not have to do this - SCons will not copy the files,
+	but use hard-links (where supported, i.e. on most linux systems).
+
+-- Problem: Any lab prints "GL-Tutorial - Error : OpenGL 3.0 not supported."
+-- Solution: OpenGL 3.0 is not supported on your system. If you're lucky that 
+	simply means that you're using out-dated drivers, or the wrong drivers.
+
+	Update drivers with whatever package-manager your system provides.
+	Generally, you'll need the binary drivers (e.g. nvidia-drivers on Gentoo)
+	for our labs, the open-source ones may not support recent OpenGLs.
+
+	If you're unlucky, you have a graphics card that does not support OpenGL
+	3.0. Get a new one (if you're on a laptop, consider yourself out of luck).
+
+	Computers in the booked lab rooms generally should support OpenGL 3.0 via
+	GeForce <Something> 520 cards.
+
+
+=== FINAL NOTES ===
+
+The ./scons.py you're using is a modified version of the scons-local package
+downloadable from http://www.scons.org. In particular, I've made the following
+changes:
+
+  - ./scons.py is a self-extracting script now
+
+I.e., all we have to distribute is the `scons.py' file - it includes a base64
+encoded .tar which is extracted on demand.
+
+  - inclusion of my "SCript", which sets up the staged build system
+
+That is, the separate `configure', `build', `install' steps are provided 
+through SCript. SCript also prettifies the output. It also provides help for
+detecting OpenGL and similar libraries on the system.
+
+After first running ./scons.py and thereby extracting the embedded tar file, 
+SCript can be found in .scons-local-2.0.1/SCript.
+
+#EOF
